@@ -22,3 +22,4 @@ pydantic
 
 # Optional: if running locally with GPU
 # torch
+sentence-transformers
