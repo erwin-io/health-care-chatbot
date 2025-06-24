@@ -1,3 +1,4 @@
+
 import os
 from dotenv import load_dotenv
 import requests
@@ -27,9 +28,9 @@ def load_vector_store():
     documents = fetch_medical_documents()
 
     splitter = RecursiveCharacterTextSplitter(
-        chunk_size=500,
+        chunk_size=400,
         chunk_overlap=50,
-        separators=["\n", " "]  # control split boundaries to avoid long chunks
+        separators=["\n", " "]
     )
     chunks = splitter.split_documents(documents)
 
