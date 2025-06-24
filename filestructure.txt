@@ -2,6 +2,7 @@
 |-- .gitignore
 |-- .render
     |-- build.sh
+|-- Dockerfile
 |-- embed.py
 |-- installed.txt
 |-- LICENSE
