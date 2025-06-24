@@ -2,7 +2,6 @@ fastapi
 uvicorn
 python-dotenv
 transformers==4.40.0
-tokenizers
 sentence-transformers==2.6.1
 torch
 langchain-community==0.3.26
