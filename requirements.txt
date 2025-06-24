@@ -1,0 +1,24 @@
+fastapi
+uvicorn
+python-dotenv
+requests
+
+# LangChain core + community modules
+langchain
+langchain-community
+langchain-core
+langchain-huggingface
+
+# HuggingFace Transformers & pipeline
+transformers
+accelerate
+huggingface_hub
+
+# FAISS (CPU-only version)
+faiss-cpu
+
+# Pydantic for FastAPI models
+pydantic
+
+# Optional: if running locally with GPU
+# torch

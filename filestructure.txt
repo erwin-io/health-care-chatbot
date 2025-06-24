@@ -1,0 +1,11 @@
+|-- .env
+|-- .gitignore
+|-- embed.py
+|-- LICENSE
+|-- main.py
+|-- README.md
+|-- render.yaml
+|-- requirements.txt
+|-- __pycache__
+    |-- embed.cpython-312.pyc
+    |-- main.cpython-312.pyc

@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: health-care-chatbot-api
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port 10000
+    envVars:
+      - key: RUN_MODE
+        value: production
+      - key: HUGGINGFACEHUB_API_TOKEN
+        sync: false  # Add this securely in Render dashboard
+    plan: free
+    autoDeploy: true
