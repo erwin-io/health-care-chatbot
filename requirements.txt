@@ -1,25 +1,11 @@
 fastapi
 uvicorn
 python-dotenv
-requests
-
-# LangChain core + community modules
-langchain
-langchain-community
+transformers==4.40.0
+torch
+sentence-transformers==2.6.1
+langchain-community==0.3.26
 langchain-core
 langchain-huggingface
-
-# HuggingFace Transformers & pipeline
-transformers
-accelerate
-huggingface_hub
-
-# FAISS (CPU-only version)
+langchain-text-splitters
 faiss-cpu
-
-# Pydantic for FastAPI models
-pydantic
-
-# Optional: if running locally with GPU
-# torch
-sentence-transformers
