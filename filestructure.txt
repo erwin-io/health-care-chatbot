@@ -1,5 +1,7 @@
 |-- .env
 |-- .gitignore
+|-- .render
+    |-- build.sh
 |-- embed.py
 |-- installed.txt
 |-- LICENSE
@@ -9,5 +11,7 @@
 |-- requirements.txt
 |-- runtime.txt
 |-- __pycache__
+    |-- embed.cpython-311.pyc
     |-- embed.cpython-312.pyc
+    |-- main.cpython-311.pyc
     |-- main.cpython-312.pyc
