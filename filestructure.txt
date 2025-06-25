@@ -7,6 +7,7 @@
 |-- index.js
 |-- installed.txt
 |-- knowledgeBase.js
+|-- languageDetector.js
 |-- LICENSE
 |-- main.py
 |-- package-lock.json

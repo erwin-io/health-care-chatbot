@@ -1,22 +1,39 @@
-// promptTemplate.js
-export function buildPrompt(question, retrievedDocs) {
-  const disclaimer = "⚠️ Disclaimer: This information is not a substitute for professional medical advice. Always consult a healthcare provider if symptoms persist or worsen.";
+export function buildPrompt(question, retrievedDocs, languageMode = 'english') {
+  const disclaimer = "⚠️ This information is not a substitute for professional medical advice. Please consult a healthcare provider if symptoms persist or worsen.";
 
   const context = retrievedDocs.map((doc, i) => `Document ${i + 1}:\n${doc.pageContent}`).join("\n\n");
+const languageInstruction = {
+  english: "Respond in English only.",
+  tagalog: "Tumugon gamit ang wikang Tagalog lamang.",
+  mixed: `
+Gamitin ang parehong Tagalog at English (Taglish) sa sagot. Huwag ulit-ulitin ang parehong simula tulad ng. Gamitin ang natural, varied na human tone — parang tunay na kausap sa chat o text.
+
+Pwede magsimula sa:
+- Observational ("Hmm, kung masakit pa rin ulo mo...")
+- Concerned but casual ("Nako, mukhang kailangan mo talagang magpahinga.")
+- Direct to advice ("Try mo muna mag-hydrate...")
+- Try other than "Aw, sorry to hear that" "kapatid"
+
+Iwasan ang robotic or scripted tone. Maging parang totoong kausap.`
+};
+
 
   return `
 You are a friendly and empathetic virtual medical assistant designed to help users with common health questions.
 
-Respond in a clear, friendly, and supportive human tone.
+${languageInstruction[languageMode] || languageInstruction.english}
 
-You MUST include:
-1. A simple explanation based on the documents.
-2. Practical next steps or tips for the user.
-3. An urgent care warning if serious symptoms are described.
-4. A gentle reminder to consult a real doctor when necessary.
-5. The disclaimer at the end.
+Respond in a human, supportive, and clear tone.
 
-You have access to the following documents:
+Instructions:
+1. Explain things simply using the language style above.
+2. Give useful next steps or home remedies.
+3. If symptoms sound serious, give a gentle urgent care warning.
+4. Always include this disclaimer at the end:
+
+${disclaimer}
+
+You have access to these medical documents:
 
 ${context}
 
@@ -24,11 +41,9 @@ User's question:
 """
 ${question}
 """
-
-Now write a clear, human response using the information above.
-
-${disclaimer}`.trim();
+`.trim();
 }
+
 
 // ✅ Helper to stay within safe token budget
 export function truncateDocs(docs, maxTotalChars = 8000) {

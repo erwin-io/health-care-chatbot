@@ -5,6 +5,7 @@ import fetch from 'node-fetch';
 import { getMedicalDocs } from './knowledgeBase.js';
 import { filterRelevantDocs } from './retrieverAgent.js';
 import { buildPrompt, truncateDocs } from './promptTemplate.js';
+import { detectLanguage } from './languageDetector.js';
 
 dotenv.config();
 
@@ -53,16 +54,19 @@ app.post('/ask', async (req, res) => {
   if (!question) return res.status(400).json({ error: 'Missing question' });
 
   try {
-    // Add delay before processing request (e.g. 1.5 seconds)
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await new Promise(resolve => setTimeout(resolve, 1500));
+
+    const language = await detectLanguage(question); // 'english', 'tagalog', 'mixed'
+    console.log("🌐 Detected language:", language);
 
     const allDocs = await getMedicalDocs();
     const filteredDocs = await filterRelevantDocs(question, allDocs);
     const truncatedDocs = truncateDocs(filteredDocs, 8000); // 8000 chars max
-    const prompt = buildPrompt(question, truncatedDocs);
+
+    const prompt = buildPrompt(question, truncatedDocs, language);
 
     const answer = await callLLMWithRetry(prompt, question);
-    res.json({ answer });
+    res.json({ answer, language });
   } catch (err) {
     console.error("❌", err.message);
     res.status(500).json({ error: err.message });
