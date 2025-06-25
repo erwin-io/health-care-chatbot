@@ -4,23 +4,16 @@ import dotenv from 'dotenv';
 import fetch from 'node-fetch';
 import { getMedicalDocs } from './knowledgeBase.js';
 import { filterRelevantDocs } from './retrieverAgent.js';
-import { buildPrompt } from './promptTemplate.js';
+import { buildPrompt, truncateDocs } from './promptTemplate.js';
 
 dotenv.config();
 
 const app = express();
 app.use(express.json());
 
-app.post('/ask', async (req, res) => {
-  const { question } = req.body;
-  if (!question) return res.status(400).json({ error: 'Missing question' });
-
-  try {
-    const allDocs = await getMedicalDocs();
-    const selectedDocs = await filterRelevantDocs(question, allDocs);
-    const prompt = buildPrompt(question, selectedDocs);
-
-    const response = await fetch(process.env.GROQ_API_URL, {
+async function callLLMWithRetry(prompt, question, retries = 3) {
+  for (let attempt = 0; attempt < retries; attempt++) {
+    const res = await fetch(process.env.GROQ_API_URL, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
@@ -33,17 +26,42 @@ app.post('/ask', async (req, res) => {
           { role: "user", content: question },
         ],
         temperature: 0.2,
-        max_tokens: 800,
+        max_tokens: 600,
       }),
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`LLM Error: ${errorText}`);
+    if (res.status === 429) {
+      console.warn(`⏳ Rate limited. Retrying in 2000ms...`);
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      continue;
     }
 
-    const data = await response.json();
-    const answer = data.choices[0].message.content;
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`LLM Error: ${text}`);
+    }
+
+    const data = await res.json();
+    return data.choices[0].message.content;
+  }
+
+  throw new Error("Exceeded retry attempts due to rate limits.");
+}
+
+app.post('/ask', async (req, res) => {
+  const { question } = req.body;
+  if (!question) return res.status(400).json({ error: 'Missing question' });
+
+  try {
+    // Add delay before processing request (e.g. 1.5 seconds)
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    const allDocs = await getMedicalDocs();
+    const filteredDocs = await filterRelevantDocs(question, allDocs);
+    const truncatedDocs = truncateDocs(filteredDocs, 8000); // 8000 chars max
+    const prompt = buildPrompt(question, truncatedDocs);
+
+    const answer = await callLLMWithRetry(prompt, question);
     res.json({ answer });
   } catch (err) {
     console.error("❌", err.message);

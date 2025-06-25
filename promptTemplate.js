@@ -29,3 +29,19 @@ Now write a clear, human response using the information above.
 
 ${disclaimer}`.trim();
 }
+
+// ✅ Helper to stay within safe token budget
+export function truncateDocs(docs, maxTotalChars = 8000) {
+  let total = 0;
+  const selected = [];
+
+  for (const doc of docs) {
+    const len = doc.pageContent.length;
+    if (total + len > maxTotalChars) break;
+
+    selected.push(doc);
+    total += len;
+  }
+
+  return selected;
+}
