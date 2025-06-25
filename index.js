@@ -6,11 +6,33 @@ import { getMedicalDocs } from './knowledgeBase.js';
 import { filterRelevantDocs } from './retrieverAgent.js';
 import { buildPrompt, truncateDocs } from './promptTemplate.js';
 import { detectLanguage } from './languageDetector.js';
+import { getDatabase } from 'firebase-admin/database';
+import admin from 'firebase-admin';
 
 dotenv.config();
 
+// ✅ Initialize Firebase Admin SDK
+if (admin.apps.length === 0) {
+  admin.initializeApp({
+    credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON)),
+    databaseURL: process.env.FIREBASE_DATABASE_URL,
+  });
+}
+
+const db = getDatabase();
 const app = express();
 app.use(express.json());
+
+async function storeMessage(userId, role, content) {
+  const ref = db.ref(`users/${userId}/messages`).push();
+  await ref.set({ role, content, timestamp: Date.now() })
+    .catch(err => console.error("Firebase write failed:", err));
+}
+
+async function getUserMemory(userId, limit = 5) {
+  const snap = await db.ref(`users/${userId}/messages`).orderByChild('timestamp').limitToLast(limit).get();
+  return Object.values(snap.val() || {});
+}
 
 async function callLLMWithRetry(prompt, question, retries = 3) {
   for (let attempt = 0; attempt < retries; attempt++) {
@@ -39,6 +61,9 @@ async function callLLMWithRetry(prompt, question, retries = 3) {
 
     if (!res.ok) {
       const text = await res.text();
+      if (res.status === 429) {
+        return { error: 'Rate limit hit. Please try again shortly.' };
+      }
       throw new Error(`LLM Error: ${text}`);
     }
 
@@ -50,22 +75,34 @@ async function callLLMWithRetry(prompt, question, retries = 3) {
 }
 
 app.post('/ask', async (req, res) => {
-  const { question } = req.body;
-  if (!question) return res.status(400).json({ error: 'Missing question' });
+  const { question, userId } = req.body;
+  if (!question || !userId) return res.status(400).json({ error: 'Missing question or userId' });
 
   try {
     await new Promise(resolve => setTimeout(resolve, 1500));
 
-    const language = await detectLanguage(question); // 'english', 'tagalog', 'mixed'
-    console.log("🌐 Detected language:", language);
-
+    const language = await detectLanguage(question);
     const allDocs = await getMedicalDocs();
     const filteredDocs = await filterRelevantDocs(question, allDocs);
-    const truncatedDocs = truncateDocs(filteredDocs, 8000); // 8000 chars max
+    const truncatedDocs = truncateDocs(filteredDocs, 8000);
 
-    const prompt = buildPrompt(question, truncatedDocs, language);
+    await storeMessage(userId, 'user', question);
+
+    const pastMessages = await getUserMemory(userId);
+    const memory = pastMessages
+      .map(m => `${m.role === 'user' ? 'User said:' : 'Assistant said:'} ${m.content}`)
+      .join('\n');
+
+    const prompt = buildPrompt(question, truncatedDocs, language, memory);
 
     const answer = await callLLMWithRetry(prompt, question);
+
+    if (typeof answer === 'object' && answer.error) {
+      return res.status(429).json({ error: answer.error });
+    }
+
+    await storeMessage(userId, 'assistant', answer);
+
     res.json({ answer, language });
   } catch (err) {
     console.error("❌", err.message);
