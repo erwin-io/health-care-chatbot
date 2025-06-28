@@ -1,26 +1,12 @@
 |-- .env
 |-- .gitignore
-|-- .render
-    |-- build.sh
-|-- Dockerfile
-|-- embed.py
 |-- index.js
-|-- installed.txt
 |-- knowledgeBase.js
 |-- languageDetector.js
 |-- LICENSE
-|-- main.py
 |-- package-lock.json
 |-- package.json
 |-- promptTemplate.js
 |-- README.md
-|-- render.yaml
-|-- requirements.txt
 |-- retrieverAgent.js
-|-- runtime.txt
 |-- vercel.json
-|-- __pycache__
-    |-- embed.cpython-311.pyc
-    |-- embed.cpython-312.pyc
-    |-- main.cpython-311.pyc
-    |-- main.cpython-312.pyc
